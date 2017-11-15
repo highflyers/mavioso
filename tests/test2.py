@@ -13,12 +13,10 @@ clr.AddReference("MissionPlanner.Utilities")
 from MissionPlanner.Utilities import Locationwp
 
 import mavioso.MAV
-import tests.context
-# import logging
+import mavioso.logging as logging
 
-tests.context.init()
+logging.info("started")
 
-# logging.info("started")
 Script.ChangeMode("GUIDED")
 
 drone = mavioso.MAV.MAV(Script, MAV, MAVLink, cs)
