@@ -2,6 +2,8 @@ import logging
 
 from MissionPlanner.Utilities import Locationwp
 
+import mavioso.MaviosoExceptions
+
 class MAV:
     def __init__(self, Script, MAV, MAVLink, cs):
         self.script = Script
@@ -14,22 +16,40 @@ class MAV:
         return ret
 
     def arm(self):
+        if self.cs.armed:
+            logging.info("Already armed, ignoring command...")
+            return False
         status = self.mav.doARM(True)
         logging.info("MAV: arm(): {0}".format(status))
+        if status is False:
+            raise mavioso.MaviosoExceptions.MaviosoException('unexpected error while arming')
         return status
 
     def disarm(self):
+        if self.cs.armed is False:
+            logging.info("Already disarmed, ignoring command...")
+            return False
         status = self.mav.doARM(False)
         logging.info("MAV: disarm(): {0}".format(status))
+        if status is False:
+            raise mavioso.MaviosoExceptions.MaviosoException('unexpected error while disarming')
         return status
 
     def takeoff(self, alt):
+        if self.cs.armed is False:
+            raise mavioso.MaviosoExceptions.NotArmedException('Takeoff failed, UAV is not armed')
+        if self.cs.mode.upper() != 'GUIDED':
+            raise mavioso.MaviosoExceptions.WrongModeException('Takeoff failed, expected mode is GUIDED,'
+                                     + ' current mode is {0}'.format(self.cs.mode))
         status = self.mav.doCommand(self.mavlink.MAV_CMD.TAKEOFF, 0, 0, 0, 0, 0, 0, float(alt))
         logging.info("takeoff {0}".format(status))
+        if status is False:
+            raise mavioso.MaviosoExceptions.MaviosoException('unexpected error while taking off')
         return status
 
     def set_waypoint(self, coordinate):
-        wp1 = Locationwp().Set(coordinate.latitude, coordinate.longitude, coordinate.altitude, int(self.mavlink.MAV_CMD.WAYPOINT))
+        wp1 = Locationwp().Set(coordinate.latitude, coordinate.longitude, coordinate.altitude,
+                               int(self.mavlink.MAV_CMD.WAYPOINT))
         self.mav.setGuidedModeWP(wp1, True)
 
     def set_mode(self, mode):
