@@ -1,4 +1,4 @@
-# import logging
+import logging
 
 from MissionPlanner.Utilities import Locationwp
 
@@ -15,17 +15,17 @@ class MAV:
 
     def arm(self):
         status = self.mav.doARM(True)
-        # logging.info("MAV: arm(): {0}".format(status))
+        logging.info("MAV: arm(): {0}".format(status))
         return status
 
     def disarm(self):
         status = self.mav.doARM(False)
-        # logging.info("MAV: disarm(): {0}".format(status))
+        logging.info("MAV: disarm(): {0}".format(status))
         return status
 
     def takeoff(self, alt):
         status = self.mav.doCommand(self.mavlink.MAV_CMD.TAKEOFF, 0, 0, 0, 0, 0, 0, float(alt))
-        # logging.info("takeoff {0}".format(status))
+        logging.info("takeoff {0}".format(status))
         return status
 
     def set_waypoint(self, coordinate):
