@@ -12,6 +12,9 @@ NOTSET = 0
 LEVEL_NAMES = {CRITICAL: "CRITICAL", ERROR: "ERROR", \
 WARNING: "WARNING", INFO: "INFO", DEBUG: "DEBUG", NOTSET: "NOTSET"}
 
+def debug(msg, *args, **kwargs):
+    log(DEBUG, msg, args, kwargs)
+
 def info(msg, *args, **kwargs):
     log(INFO, msg, args, kwargs)
     
