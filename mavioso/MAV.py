@@ -48,9 +48,11 @@ class MAV:
         return status
 
     def set_waypoint(self, coordinate):
+        # TODO: it probably does not like coordinate argument that equals 0.0. Setting it to 0.01 works fine
         wp1 = Locationwp().Set(coordinate.latitude, coordinate.longitude, coordinate.altitude,
                                int(self.mavlink.MAV_CMD.WAYPOINT))
         self.mav.setGuidedModeWP(wp1, True)
+        logging.info("MAV: set_waypoint() {0}".format(str(coordinate)))
 
     def set_mode(self, mode):
         status = self.mav.setMode(mode)
