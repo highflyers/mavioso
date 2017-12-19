@@ -9,3 +9,7 @@ class WrongModeException(MaviosoException):
 
 class NotArmedException(MaviosoException):
     pass
+
+
+class AlreadyInAirException(MaviosoException):
+    pass

@@ -10,6 +10,7 @@ WAIT_WAYPOINT_SLEEP_TIME = 500
 VTOL_MODE_PLANE = 0
 VTOL_MODE_QUAD = 1
 
+
 class MAV:
     def __init__(self, Script, MAV, MAVLink, cs):
         self.script = Script
@@ -17,7 +18,6 @@ class MAV:
         self.mavlink = MAVLink
         self.cs = cs
         self.position_check_threshold = 50
-
 
     def currentstate(self):
         """Return current state as dictionary"""
@@ -56,7 +56,9 @@ class MAV:
             raise mavioso.MaviosoExceptions.NotArmedException('Takeoff failed, UAV is not armed')
         if self.cs.mode.upper() != 'GUIDED':
             raise mavioso.MaviosoExceptions.WrongModeException('Takeoff failed, expected mode is GUIDED,'
-                                     + ' current mode is {0}'.format(self.cs.mode))
+                                                               + ' current mode is {0}'.format(self.cs.mode))
+        if self.cs.landed is False:
+            raise mavioso.MaviosoExceptions.AlreadyInAirException('Already in air, no takeoff!')
         status = self.mav.doCommand(self.mavlink.MAV_CMD.TAKEOFF, 0, 0, 0, 0, 0, 0, float(alt))
         logging.info("takeoff {0}".format(status))
         if status is False:
@@ -85,7 +87,7 @@ class MAV:
         :param timeout: timeout in seconds (-1 to disable)"""
         time_begin = time.time()
         timeout_occurred = False
-        while not(self.is_position_ok(coordinate, threshold)):
+        while not (self.is_position_ok(coordinate, threshold)):
             self.script.Sleep(WAIT_WAYPOINT_SLEEP_TIME)
             current_time = time.time()
             if (timeout > 0) and (current_time - time_begin) > timeout:
@@ -104,8 +106,8 @@ class MAV:
         return dist < thr
 
     def set_mode(self, mode):
-        status = self.mav.setMode(mode)
-        return status
+        """ deleted status - MissionPlanner doesn't return any status (setMode return type is void) """
+        self.mav.setMode(mode)
 
     def set_VTOL_mode(self, quadmode):
         """Put MAV into quadrotor or plane mode
@@ -115,6 +117,7 @@ class MAV:
         self.mav.setGuidedModeWP(wp1, True)
         logging.info("MAV: VTOL mode: {0}".format(quadmode))
 
-    def set_circle_radius(self, radius):            #set circle radius in loiter and guided (circles after reaching the waypoint) mode
+    def set_circle_radius(self, radius):
+        """set circle radius in loiter and guided (circles after reaching the waypoint) mode"""
         status = self.mav.setParam("WP_LOITER_RAD", radius)
         logging.info("set radius to {0}: {1}".format(radius, status))
