@@ -1,5 +1,6 @@
 import logging
 import time
+import json
 
 from MissionPlanner.Utilities import Locationwp
 
@@ -17,6 +18,9 @@ class MAV:
         self.mavlink = MAVLink
         self.cs = cs
         self.position_check_threshold = 50
+        self.path = []
+        self.new_path = False
+        self.current_waypoint = None
 
 
     def currentstate(self):
@@ -118,3 +122,14 @@ class MAV:
     def set_circle_radius(self, radius):            #set circle radius in loiter and guided (circles after reaching the waypoint) mode
         status = self.mav.setParam("WP_LOITER_RAD", radius)
         logging.info("set radius to {0}: {1}".format(radius, status))
+
+    def set_path(self, path):
+        try:
+            data = json.loads(path)
+            self.path = data['waypoints']
+            self.new_path = True
+            logging.info("MAV: set_path() {0}".format(self.path))
+        except:
+            logging.info("MAV: set_path(): Error while setting path")
+            return 0
+        return 1

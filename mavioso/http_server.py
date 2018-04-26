@@ -1,5 +1,6 @@
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import SocketServer
+import json
 
 
 class Server(HTTPServer):
@@ -26,23 +27,20 @@ class ServerHandler(BaseHTTPRequestHandler):
         self.mavLock.release()
 
         self._set_headers()
-        self.wfile.write(str(ret))
+        self.wfile.write(json.dumps(ret))
 
     def do_HEAD(self):
         self._set_headers()
 
     def do_POST(self):
+        function_name = self.path.replace("/", "")
         length = int(self.headers.getheader('content-length'))
         data = self.rfile.read(length)
 
-        self.cmd_queue.put(str(data))
-
-        self.mavLock.acquire()
-        ret = self.drone.currentstate()
-        self.mavLock.release()
-
+        self.cmd_queue.put([str(data),function_name])
+        
         self._set_headers()
-        self.wfile.write(str(ret))
+        self.wfile.write(json.dumps({"status": 1}))
 
 
 def run(drone, cmd_queue, mav_lock, port=80):
