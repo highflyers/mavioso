@@ -17,15 +17,22 @@ class MAV:
         self.mav = MAV
         self.mavlink = MAVLink
         self.cs = cs
-        self.position_check_threshold = 50
+        self.position_check_threshold = 20
         self.path = []
         self.new_path = False
         self.current_waypoint = None
+        self.next_goal = None
+        self.next_goal_reached = 0
 
 
     def currentstate(self):
         """Return current state as dictionary"""
         ret = {"latitude": float(self.cs.lat), "longitude": float(self.cs.lng), "altitude": float(self.cs.alt)}
+        return ret
+
+    def nextGoalState(self):
+        """Return info if next goal reached"""
+        ret = {"reached": int(self.next_goal_reached)}
         return ret
 
     def arm(self):
@@ -66,6 +73,13 @@ class MAV:
         if status is False:
             raise mavioso.MaviosoExceptions.MaviosoException('unexpected error while taking off')
         return status
+
+    def set_next_goal(self, coordinate, timeout=-1):
+        """Set new goal waypoint"""
+        self.next_goal = GeoCoordinate.GeoCoordinate.from_mav_state(json.loads(coordinate))
+        self.next_goal_reached = 0
+        logging.info("MAV: set_next_goal() {0}".format(str(coordinate)))
+        return 1
 
     def set_waypoint(self, coordinate, should_wait=False, timeout=-1):
         """Set GUIDED mode waypoint

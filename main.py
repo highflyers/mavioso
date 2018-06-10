@@ -57,6 +57,7 @@ def pathTracker(drone, mavLock):
         mavLock.acquire()
         tracker.track()
         mavLock.release()
+        time.sleep(0.01)
 
     logging.info("pathTracker stopped")
 

@@ -23,7 +23,10 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         self.mavLock.acquire()
-        ret = self.drone.currentstate()
+        if(self.path == "/currentstate"):
+            ret = self.drone.currentstate()
+        else:
+            ret = self.drone.nextGoalState()
         self.mavLock.release()
 
         self._set_headers()
@@ -38,7 +41,7 @@ class ServerHandler(BaseHTTPRequestHandler):
         data = self.rfile.read(length)
 
         self.cmd_queue.put([str(data),function_name])
-        
+
         self._set_headers()
         self.wfile.write(json.dumps({"status": 1}))
 
