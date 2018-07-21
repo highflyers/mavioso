@@ -17,7 +17,7 @@ class MAV:
         self.mav = MAV
         self.mavlink = MAVLink
         self.cs = cs
-        self.position_check_threshold = 20
+        self.position_check_threshold = 40
         self.path = []
         self.new_path = False
         self.current_waypoint = None
@@ -27,7 +27,8 @@ class MAV:
 
     def currentstate(self):
         """Return current state as dictionary"""
-        ret = {"latitude": float(self.cs.lat), "longitude": float(self.cs.lng), "altitude": float(self.cs.alt)}
+        ret = {"latitude": float(self.cs.lat), "longitude": float(self.cs.lng), "altitude": float(self.cs.alt),
+        "groundSpeed": float(self.cs.groundspeed), "heading": float(self.cs.groundcourse)}
         return ret
 
     def nextGoalState(self):

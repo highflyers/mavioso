@@ -22,12 +22,12 @@ class ServerHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        self.mavLock.acquire()
         if(self.path == "/currentstate"):
             ret = self.drone.currentstate()
         else:
+            self.mavLock.acquire()
             ret = self.drone.nextGoalState()
-        self.mavLock.release()
+            self.mavLock.release()
 
         self._set_headers()
         self.wfile.write(json.dumps(ret))
