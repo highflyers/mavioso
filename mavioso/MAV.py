@@ -97,6 +97,7 @@ class MAV:
             timeout_occurred = self.wait_waypoint(coordinate, timeout=timeout)
         return timeout_occurred
 
+
     def wait_waypoint(self, coordinate, threshold=None, timeout=-1):
         """Wait until MAV reaches specified waypoint
         :param coordinate: GeoCoordinate object, a waypoint to check
@@ -144,7 +145,45 @@ class MAV:
             self.path = data['waypoints']
             self.new_path = True
             logging.info("MAV: set_path() {0}".format(self.path))
+            self.setAutoMission()
         except:
             logging.info("MAV: set_path(): Error while setting path")
             return 0
         return 1
+
+    def setAutoMission(self):
+        """Set auto mission from current path"""
+        home = Locationwp().Set(50.26670,18.670729,0, int(self.mavlink.MAV_CMD.WAYPOINT)) #to do: read current home
+
+        max_wp_total = 5
+
+        if(len(self.path) > max_wp_total):
+            wp_total = max_wp_total+2
+        else:
+            wp_total = len(self.path)+2
+
+        self.mav.setWPTotal(wp_total)
+
+        logging.info("MAV: setAutoMission: total wps count = {0}".format(len(self.path)+1))
+        self.mav.setWP(home,0,self.mavlink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
+
+        counter = 1
+        for i in self.path:
+            next_wp = GeoCoordinate.GeoCoordinate.from_mav_state(i)
+            wp = Locationwp().Set(next_wp.latitude,next_wp.longitude,30, int(self.mavlink.MAV_CMD.WAYPOINT))
+            logging.info("MAV: set_auto_mission(): set_wp: {0}, {1}".format(next_wp.latitude, next_wp.longitude))
+            self.mav.setWP(wp,counter,self.mavlink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
+            counter+=1
+            if(counter > max_wp_total):
+                break
+
+        loiter = Locationwp()
+        Locationwp.id.SetValue(loiter, int(self.mavlink.MAV_CMD.LOITER_UNLIM))
+        Locationwp.alt.SetValue(loiter, 30)
+        self.mav.setWP(loiter, counter, self.mavlink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
+
+        self.mav.setWPACK();
+
+        self.set_mode("GUIDED")
+        self.mav.setWPCurrent(1)
+        self.set_mode("AUTO")
