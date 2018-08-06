@@ -1,6 +1,5 @@
 import mavioso.MAV
 import mavioso.GeoCoordinate as GeoCoordinate
-import mavioso.automission as automission
 import time
 
 class PathTracker:

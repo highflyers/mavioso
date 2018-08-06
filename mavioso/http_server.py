@@ -24,6 +24,8 @@ class ServerHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if(self.path == "/currentstate"):
             ret = self.drone.currentstate()
+        elif(self.path == "/currentMode"):
+            ret = self.drone.currentMode()
         else:
             self.mavLock.acquire()
             ret = self.drone.nextGoalState()
