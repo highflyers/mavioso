@@ -72,11 +72,11 @@ def main():
     mav_cmd_queue = Queue.Queue()
 
     control_thread = threading.Thread(target=mavControl, args=[drone, mav_cmd_queue, mavLock])
-    # tracker_thread = threading.Thread(target=pathTracker, args=[drone, mavLock])
+    tracker_thread = threading.Thread(target=pathTracker, args=[drone, mavLock])
 
     try:
         control_thread.start()
-        # tracker_thread.start()
+        tracker_thread.start()
         mavioso.http_server.run(drone, mav_cmd_queue, mavLock, 1234)
 
     except Exception as e:
@@ -84,6 +84,6 @@ def main():
         global threadsShouldRun
         threadsShouldRun = False
         control_thread.join()
-        # tracker_thread.join()
+        tracker_thread.join()
 
 main()

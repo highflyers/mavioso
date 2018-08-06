@@ -189,7 +189,7 @@ class MAV:
             self.path = data['waypoints']
             self.new_path = True
             logging.info("MAV: set_path() {0}".format(self.path))
-            self.setAutoMission()
+            # self.setAutoMission()
         except:
             logging.info("MAV: set_path(): Error while setting path")
             return 0
