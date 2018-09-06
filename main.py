@@ -51,7 +51,7 @@ def mavControl(drone, commandQueue, mavLock):
 
 def pathTracker(drone, mavLock):
     logging.info("pathTracker started")
-    tracker = mavioso.PathTracker.PathTracker(drone)
+    tracker = mavioso.PathTracker.PathTracker(drone, cs)
     global threadsShouldRun
     while threadsShouldRun:
         mavLock.acquire()
@@ -66,6 +66,8 @@ def main():
     Script.ChangeMode("GUIDED")
 
     drone = mavioso.MAV.MAV(Script, MAV, MAVLink, cs)
+
+    drone.set_VTOL_mode(0)
 
     mavLock = threading.Lock()
 

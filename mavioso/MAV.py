@@ -23,7 +23,7 @@ class MAV:
         self.current_waypoint = None
         self.next_goal = None
         self.next_goal_reached = 0
-        self.vtol_flight = False
+        self.vtol_flight = True
         self.control_on = True
 
 
@@ -41,6 +41,13 @@ class MAV:
     def nextGoalState(self):
         """Return info if next goal reached"""
         ret = {"reached": int(self.next_goal_reached)}
+        return ret
+
+    def isArmed(self):
+        armed = 0
+        if(self.cs.armed):
+            armed = 1
+        ret = {"armed": armed}
         return ret
 
     def arm(self):
@@ -136,17 +143,25 @@ class MAV:
             data = json.loads(mode)
             parsedMode = data['mode']
             if(parsedMode == "AUTO"):
-                self.mav.setWPTotal(2)
-                home = Locationwp().Set(50.26670,18.670729,0, int(self.mavlink.MAV_CMD.WAYPOINT)) #to do: read current home
-                self.mav.setWP(home,0,self.mavlink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
-                loiter = Locationwp()
-                Locationwp.id.SetValue(loiter, int(self.mavlink.MAV_CMD.LOITER_UNLIM))
-                Locationwp.alt.SetValue(loiter, 30)
-                self.mav.setWP(loiter, 1, self.mavlink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
+                self.control_on = False
+                self.path = []
+                self.current_waypoint = None
+                self.next_goal = None
+                # self.mav.setWPTotal(2)
+                # home = Locationwp().Set(50.26670,18.670729,0, int(self.mavlink.MAV_CMD.WAYPOINT)) #to do: read current home
+                # self.mav.setWP(home,0,self.mavlink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
+                # loiter = Locationwp()
+                # Locationwp.id.SetValue(loiter, int(self.mavlink.MAV_CMD.LOITER_UNLIM))
+                # Locationwp.alt.SetValue(loiter, 30)
+                # self.mav.setWP(loiter, 1, self.mavlink.MAV_FRAME.GLOBAL_RELATIVE_ALT)
 
-                self.mav.setWPACK();
-                self.mav.setWPCurrent(1)
+                # self.mav.setWPACK();
+                # self.mav.setWPCurrent(1)
 
+                # self.control_on = True
+
+            if(parsedMode == "GUIDED"):
+                logging.info("MAV: set control on to True")
                 self.control_on = True
 
             status = self.mav.setMode(parsedMode)
@@ -155,6 +170,11 @@ class MAV:
 
         logging.debug("MAV: mode: {0}".format(self.cs.mode))
         return status
+
+    def start_loiter(self, arg):
+        self.path = []
+        self.current_waypoint = None
+        self.set_mode("Loiter")
 
     def enable_control(self, isEnabled):
         try:
@@ -175,21 +195,26 @@ class MAV:
             """Put MAV into quadrotor or plane mode
             :param quadmode: mode to set (1 for quadrotor, 0 for plane)"""
             self.mav.setParam("Q_GUIDED_MODE", quadmode)
-            wp1 = Locationwp().Set(self.cs.lat, self.cs.lng, self.cs.alt, int(self.mavlink.MAV_CMD.WAYPOINT))
-            self.mav.setGuidedModeWP(wp1, True)
+            # wp1 = Locationwp().Set(self.cs.lat, self.cs.lng, self.cs.alt, int(self.mavlink.MAV_CMD.WAYPOINT))
+            # self.mav.setGuidedModeWP(wp1, True)
             logging.info("MAV: VTOL mode: {0}".format(quadmode))
 
     def set_circle_radius(self, radius):            #set circle radius in loiter and guided (circles after reaching the waypoint) mode
         status = self.mav.setParam("WP_LOITER_RAD", radius)
         logging.info("set radius to {0}: {1}".format(radius, status))
+        return status
 
     def set_path(self, path):
         try:
-            data = json.loads(path)
-            self.path = data['waypoints']
-            self.new_path = True
-            logging.info("MAV: set_path() {0}".format(self.path))
-            # self.setAutoMission()
+            logging.info("control on: {0}, mode: {1}".format(self.control_on, self.cs.mode.upper()))
+            if(self.control_on == True and self.cs.mode.upper() == "GUIDED"):
+                data = json.loads(path)
+                self.path = data['waypoints']
+                self.new_path = True
+                logging.info("MAV: set_path() {0}".format(self.path))
+                # self.setAutoMission()
+            else:
+                logging.warning("MAV: trying to set path while not in GUIDED mode")
         except:
             logging.info("MAV: set_path(): Error while setting path")
             return 0
