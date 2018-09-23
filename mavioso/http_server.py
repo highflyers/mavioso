@@ -26,6 +26,8 @@ class ServerHandler(BaseHTTPRequestHandler):
             ret = self.drone.currentstate()
         elif(self.path == "/currentMode"):
             ret = self.drone.currentMode()
+        elif(self.path == "/getRuntime"):
+            ret = self.drone.getRuntime()
         else:
             self.mavLock.acquire()
             ret = self.drone.nextGoalState()

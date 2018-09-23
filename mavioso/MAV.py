@@ -23,11 +23,11 @@ class MAV:
         self.current_waypoint = None
         self.next_goal = None
         self.next_goal_reached = 0
-        self.vtol_flight = True
+        self.vtol_flight = False
         self.control_on = True
 
-
     def currentstate(self):
+        logging.info("Datetime: {0}".format(self.cs.datetime))
         """Return current state as dictionary"""
         ret = {"latitude": float(self.cs.lat), "longitude": float(self.cs.lng), "altitude": float(self.cs.alt),
         "groundSpeed": float(self.cs.groundspeed), "heading": float(self.cs.yaw), "airspeed": float(self.cs.airspeed)}
@@ -48,6 +48,16 @@ class MAV:
         if(self.cs.armed):
             armed = 1
         ret = {"armed": armed}
+        return ret
+
+    def getRuntime(self):
+        try:
+            logging.info("MAV: Reading runtime")
+            # ret = {"runtime": float(self.mav.GetParam("STAT_RUNTIME"))}
+            ret = {"time_in_air": self.cs.rxrssi}
+            logging.info("MAV: getRuntime(): {0}".format(ret))
+        except:
+            ret = {"runtime": -2.0}
         return ret
 
     def arm(self):
@@ -78,15 +88,23 @@ class MAV:
         """Issue Takeoff command
         :param alt: Altitude to be obtained after takeoff (no horizontal movement is assumed)
         :return True on success, False otherwise"""
+        logging.info("Starting takeoff")
+        data = json.loads(alt)
+        altitude = data['altitude']
+        if self.cs.mode.upper() != "GUIDED":
+            self.set_mode("GUIDED")
+            while(self.cs.mode.upper != "GUIDED"):
+                time.sleep(0.1)
+
         if self.cs.armed is False:
-            raise mavioso.MaviosoExceptions.NotArmedException('Takeoff failed, UAV is not armed')
-        if self.cs.mode.upper() != 'GUIDED':
-            raise mavioso.MaviosoExceptions.WrongModeException('Takeoff failed, expected mode is GUIDED,'
-                                     + ' current mode is {0}'.format(self.cs.mode))
-        status = self.mav.doCommand(self.mavlink.MAV_CMD.TAKEOFF, 0, 0, 0, 0, 0, 0, float(alt))
+            self.arm()
+            while(not self.cs.armed):
+                time.sleep(0.1)
+        
+        status = self.mav.doCommand(self.mavlink.MAV_CMD.TAKEOFF, 0, 0, 0, 0, 0, 0, float(altitude))
         logging.info("takeoff {0}".format(status))
-        if status is False:
-            raise mavioso.MaviosoExceptions.MaviosoException('unexpected error while taking off')
+        # if status is False:
+            # raise mavioso.MaviosoExceptions.MaviosoException('unexpected error while taking off')
         return status
 
     def set_next_goal(self, coordinate, timeout=-1):

@@ -60,7 +60,19 @@ def pathTracker(drone, mavLock):
         time.sleep(0.01)
 
     logging.info("pathTracker stopped")
+	
+#def paramSetter(drone, mavLock):
+#    logging.info("paramSetter started")
+#    counter = 1800
+#    global threadsShouldRun
+#    while threadsShouldRun:
+#        mavLock.acquire()
+#        drone.mav.setParam("ACRO_PITCH_RATE", counter)
+#        mavLock.release()
+#        counter += 1
+#        time.sleep(1)
 
+    # logging.info("paramSetter stopped")
 
 def main():
     Script.ChangeMode("GUIDED")
@@ -75,10 +87,12 @@ def main():
 
     control_thread = threading.Thread(target=mavControl, args=[drone, mav_cmd_queue, mavLock])
     tracker_thread = threading.Thread(target=pathTracker, args=[drone, mavLock])
+    #setter_thread = threading.Thread(target=paramSetter, args=[drone, mavLock])
 
     try:
         control_thread.start()
         tracker_thread.start()
+        #setter_thread.start()
         mavioso.http_server.run(drone, mav_cmd_queue, mavLock, 1234)
 
     except Exception as e:
@@ -87,5 +101,6 @@ def main():
         threadsShouldRun = False
         control_thread.join()
         tracker_thread.join()
+        #setter_thread.join()
 
 main()
